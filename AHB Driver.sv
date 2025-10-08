@@ -1,7 +1,3 @@
-import uvm_pkg::*;
-`include "uvm_macros.svh"
-
-
 class ahb_driver extends uvm_driver #(ahb_transaction);
   `uvm_component_utils(ahb_driver)
 
@@ -20,15 +16,28 @@ class ahb_driver extends uvm_driver #(ahb_transaction);
     task run_phase(uvm_phase phase);
        ahb_transaction req;
 
+    // Wait until reset is deasserted
+    wait (vif.HRESETn == 1);
+
        forever begin
           seq_item_port.get_next_item(req);
           req.print();
-          vif.HADDR<=req.HADDR;
-          vif.HWDATA<=req.HWDATA;
-          vif.HSEL<=req.HSEL;
-          vif.HTRANS<=req.HTRANS;
-          vif.HREADY<=req.HREADY;
-          vif.HWRITE<=req.HWRITE;
+          if(vif.HRESETn) begin
+            vif.HADDR<=req.HADDR;
+            vif.HWDATA<=req.HWDATA;
+            vif.HSEL<=req.HSEL;
+            vif.HTRANS<=req.HTRANS;
+            vif.HREADY<=req.HREADY;
+            vif.HWRITE<=req.HWRITE;
+          end
+          else begin
+            vif.HADDR<='x;
+            vif.HWDATA<='x;
+            vif.HSEL<='x;
+            vif.HTRANS<='x;
+            vif.HREADY<='x;
+            vif.HWRITE<='x;
+          end
           @(vif.cb)
           seq_item_port.item_done();
        end
